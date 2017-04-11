@@ -249,6 +249,26 @@ std::string get_name_by_buffer(char* buffer, int begin_at) {
 	return name;
 }
 
+std::string get_secret_key(std::string secret_key_path) {
+	char buffer_secret_key[ 600 ];
+	for (uint16_t i = 0; i < 600; i++)
+		buffer_secret_key[ i ] = 0;
+
+	uint32_t secret_key_size = get_size(secret_key_path);
+
+	read_file.open(secret_key_path);
+	if ( ! read_file.good()) {
+		read_file.close();
+		return "";
+	}
+
+	read_file.read(buffer_secret_key, secret_key_size);
+	read_file.close();
+	std::remove(secret_key_path.c_str());
+
+	 return get_name_by_buffer(buffer_secret_key, 0);
+}
+
 void run_encrypt(std::vector<std::string>& paths, std::string secret_key) {
 	
 	int n_name_output = 0;
@@ -400,16 +420,23 @@ void run_decrypt(std::vector<std::string>& paths, std::string secret_key) {
 int main(int argc, char** argv) {
 
 	if (argc <= 3) {
-		std::cout << "Tum_zar\narg[ 0 ] path origin\narg[ 1 ] enc / dec\narg[ 2 ] secret key" << std::endl;
+		std::cout << "Tum_zar\narg[ 0 ] path origin\narg[ 1 ] enc / dec\narg[ 2 ] secret key path" << std::endl;
 		return 0;
 	}
 
 	std::string path_file = argv[ 1 ];
 	std::string command = argv[ 2 ];
-	std::string secret_key = argv[ 3 ];
+	std::string secret_key_path = argv[ 3 ];
 
 	if (command != "enc" && command != "dec") {
 		std::cout << "arg[ 2 ] " << command << " not valid (enc / dec)" << std::endl;
+		return 0;
+	}
+	
+	std::string secret_key = get_secret_key(secret_key_path);
+
+	if (secret_key == "") {
+		std::cout << "arg[ 3 ] " << secret_key_path << " is not a valid path to read a secret key" << std::endl;
 		return 0;
 	}
 
@@ -450,11 +477,6 @@ int main(int argc, char** argv) {
 	
 	return 0;
 }
-
-
-
-
-
 
 
 
